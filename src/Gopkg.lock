@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:8daafa0b19cce126fd2b4ff92ab50ace568a7ffed7c2ed785784aa7c2154b7e5"
-  name = "github.com/g-hyoga/go-node-parser"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "cc9d0dd06ed0e461e841dbf6bcc873fb288b16ae"
-
-[[projects]]
   digest = "1:2e3c336fc7fde5c984d2841455a658a6d626450b1754a854b3b32e7a8f49a07a"
   name = "github.com/google/go-cmp"
   packages = [
@@ -21,14 +13,6 @@
   pruneopts = "UT"
   revision = "3af367b6b30c263d47e8895973edcca9a49cf029"
   version = "v0.2.0"
-
-[[projects]]
-  digest = "1:16dd6b893b78a50564cdde1d9f7ea67224dece11bb0886bd882f1dc3dc1d440d"
-  name = "github.com/k0kubun/pp"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
-  version = "v2.3.0"
 
 [[projects]]
   digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
@@ -103,7 +87,6 @@
   input-imports = [
     "github.com/g-hyoga/go-node-parser",
     "github.com/google/go-cmp/cmp",
-    "github.com/k0kubun/pp",
     "github.com/sirupsen/logrus",
     "github.com/x-cray/logrus-prefixed-formatter",
   ]

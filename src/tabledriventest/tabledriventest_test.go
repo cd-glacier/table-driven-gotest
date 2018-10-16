@@ -16,8 +16,9 @@ var ignoreInt = cmp.Comparer(func(x, y int) bool {
 
 func TestFindFunc(t *testing.T) {
 	tests := []struct {
-		code string
-		decl string
+		code       string
+		decl       string
+		testFnName string
 	}{
 		{
 			`
@@ -28,16 +29,18 @@ func TestMain(t *testing.T) {}
 			`
 func TestMain(t *testing.T) {}
 			`,
+			"TestMain",
 		},
 		{
 			`
 package main
 
-func TestMain(t *testing.T) {}
+func TestHoge(t *testing.T) {}
 			`,
 			`
-func TestMain(t *testing.T) {}
+func TestHoge(t *testing.T) {}
 			`,
+			"TestHoge",
 		},
 	}
 
@@ -47,8 +50,11 @@ func TestMain(t *testing.T) {}
 			t.Fatalf("Failed to parseFile: %s", err.Error())
 		}
 
-		tdt := &TDT{File: f, FnName: "TestMain"}
-		decl := tdt.FindFunc()
+		tdt := &TDT{File: f, FnName: tt.testFnName}
+		decl, err := tdt.FindFunc()
+		if err != nil {
+			t.Fatalf("Failed to FindFunc: %s", err.Error())
+		}
 
 		d, err := nodeparser.ParseDecl(tt.decl)
 		if err != nil {
@@ -129,7 +135,10 @@ tests := []struct{
 		if !ok {
 			t.Fatalf("Failed to convert to *ast.FuncDecl")
 		}
-		table := tdt.FindTable(decl)
+		table, err := tdt.FindTable(decl)
+		if err != nil {
+			t.Fatalf("Failed to FindTable: %s", err.Error())
+		}
 
 		stmt, err := nodeparser.ParseStmt(tt.table)
 		if err != nil {
@@ -183,7 +192,7 @@ tests := []struct{
 	},
 }
 			`,
-			1,
+			0,
 			`
 tests := []struct{
 	input string
@@ -210,7 +219,10 @@ tests := []struct{
 
 		tdt := &TDT{TestCaseIndex: tt.index}
 
-		newTable := tdt.DeleteOtherTestCase(table)
+		newTable, err := tdt.DeleteOtherTestCase(table)
+		if err != nil {
+			t.Fatalf("Failed to DeleteOtherTestCase: %s", err.Error())
+		}
 
 		if !isTable(newTable) {
 			t.Fatalf("Failed to DeleteOtherTestCase: table definition is not full")
@@ -258,7 +270,6 @@ tests := []struct{
 			if value.Value != expectedValue.Value {
 				t.Fatalf("Failed to DeleteOtherTestCase. invalid value. actual: %s, expected: %s", value.Value, expectedValue.Value)
 			}
-
 		}
 	}
 }
