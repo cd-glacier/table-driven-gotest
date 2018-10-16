@@ -3,13 +3,17 @@ package tabledriventest
 import (
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/token"
+	"os"
+	"os/exec"
 
 	"github.com/g-hyoga/table-driven-gotest/src/logger"
 )
 
 type TDT struct {
+	PackageName   string
 	FileName      string
 	File          *ast.File
 	FnName        string
@@ -18,33 +22,66 @@ type TDT struct {
 
 var log = logger.New()
 
-func New(fileName, fnName string, index int) (*TDT, error) {
+func New(packageName, fileName, fnName string, index int) (*TDT, error) {
 	tdt := &TDT{}
-	tdt.FileName = fileName
+	tdt.PackageName = "./" + packageName
+	tdt.FileName = tdt.PackageName + fileName
 	tdt.FnName = fnName
 
-	f, err := parseFile(fileName)
+	f, err := parseFile(tdt.FileName)
 	if err != nil {
+		log.Errorf("Failed to tdt New. file name: %s", tdt.FileName, err.Error())
 		return nil, err
 	}
 	tdt.File = f
 	tdt.TestCaseIndex = index
 
+	log.Debugf("Package: %s, file: %s, function: %s, index: %d", tdt.PackageName, tdt.FileName, tdt.FnName, tdt.TestCaseIndex)
 	return tdt, nil
 }
 
-func (t *TDT) Test() {
+func ReCreate(filename string) (*os.File, error) {
+	err := os.Remove(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return os.Create(filename)
+}
+
+func (t *TDT) Test() error {
 	fn, err := t.FindFunc()
 	if err != nil {
 		log.Errorf("Not Found '%s' func", t.FnName)
-		panic(fmt.Sprintf("Not Found '%s' func", t.FnName))
+		return err
 	}
+
 	table, err := t.FindTable(fn)
 	if err != nil {
 		log.Errorf("Not Found '%s' func's table", t.FnName)
-		panic(fmt.Sprintf("Not Found '%s' func's table", t.FnName))
+		return err
 	}
-	t.DeleteOtherTestCase(table)
+
+	_, err = t.DeleteOtherTestCase(table)
+	if err != nil {
+		log.Errorf("Not Found %dth test case", t.TestCaseIndex)
+		return err
+	}
+
+	file, err := ReCreate(t.FileName)
+	defer file.Close()
+	if err != nil {
+		log.Error("Failed to open %s: %s", t.FileName, err.Error())
+		return err
+	}
+	err = format.Node(file, token.NewFileSet(), t.File)
+	if err != nil {
+		log.Errorf("Failed to format.Node: %s", err.Error())
+		return err
+	}
+
+	test(t.PackageName, t.FnName)
+	return nil
 }
 
 func parseFile(fileName string) (*ast.File, error) {
@@ -95,6 +132,17 @@ func (t *TDT) DeleteOtherTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error
 	}
 
 	table.Rhs[0].(*ast.CompositeLit).Elts = testCases[t.TestCaseIndex : t.TestCaseIndex+1]
-	log.Infof("Found Test Case: ", ast.Print(token.NewFileSet(), testCases[t.TestCaseIndex:t.TestCaseIndex+1]))
+	log.Infof("Found %dth Test Case", t.TestCaseIndex)
+	// log.Debugf("Found Test Case: ", ast.Print(token.NewFileSet(), testCases[t.TestCaseIndex:t.TestCaseIndex+1]))
 	return table, nil
+}
+
+func test(packageName, fnName string) {
+	cmd := exec.Command("go", "test", "-v", packageName, "-run", fnName)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Errorf("%s", err.Error())
+	}
+
+	fmt.Println(string(out))
 }

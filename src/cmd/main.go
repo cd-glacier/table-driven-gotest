@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/g-hyoga/table-driven-gotest/src/copier"
 	"github.com/g-hyoga/table-driven-gotest/src/logger"
@@ -17,7 +18,9 @@ var log = logger.New()
 func hash(input string) string {
 	hasher := sha1.New()
 	hasher.Write([]byte(input))
-	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	hash := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	dir := strings.Replace(hash, "=", "", -1)
+	return dir
 }
 
 func main() {
@@ -33,7 +36,7 @@ func main() {
 	defer os.RemoveAll(tmpDirName)
 	copier.CopyDir(*packageName, tmpDirName)
 
-	tdt, err := tdt.New(tmpDirName+*testFileName, *testFnName, *testCaseIndex)
+	tdt, err := tdt.New(tmpDirName, *testFileName, *testFnName, *testCaseIndex)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to Tester New: %s", err.Error()))
 	}
