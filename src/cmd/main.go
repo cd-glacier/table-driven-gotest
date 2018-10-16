@@ -1,10 +1,19 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"flag"
 
+	"github.com/g-hyoga/table-driven-gotest/src/copier"
 	"github.com/k0kubun/pp"
 )
+
+func hash(input string) string {
+	hasher := sha1.New()
+	hasher.Write([]byte(input))
+	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+}
 
 func main() {
 	packageName := *flag.String("package", "./src/cmd/", "package name")
@@ -14,4 +23,7 @@ func main() {
 	flag.Parse()
 
 	pp.Println(packageName, testFileName, testFnName, testCaseNum)
+
+	tmpDirName := hash(packageName)
+	copier.CopyDir(packageName, tmpDirName)
 }
