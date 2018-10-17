@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/g-hyoga/table-driven-gotest/src/logger"
 )
@@ -18,6 +19,7 @@ type TDT struct {
 	File          *ast.File
 	FnName        string
 	TestCaseIndex int
+	Passed        bool
 }
 
 var log = logger.New()
@@ -80,7 +82,9 @@ func (t *TDT) Test() error {
 		return err
 	}
 
-	test(t.PackageName, t.FnName)
+	t.Passed = test(t.PackageName, t.FnName)
+
+	log.Debugf("Package: %s, file: %s, function: %s, index: %d, passed: %t", t.PackageName, t.FileName, t.FnName, t.TestCaseIndex, t.Passed)
 	return nil
 }
 
@@ -137,7 +141,17 @@ func (t *TDT) DeleteOtherTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error
 	return table, nil
 }
 
-func test(packageName, fnName string) {
+func splitResult(output string) string {
+	testStrs := strings.Split(output, "===")
+
+	return testStrs[1]
+}
+
+func getResult(testStr string) bool {
+	return strings.Contains(strings.Split(testStr, "---")[1], "PASS")
+}
+
+func test(packageName, fnName string) bool {
 	cmd := exec.Command("go", "test", "-v", packageName, "-run", fnName)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -145,4 +159,5 @@ func test(packageName, fnName string) {
 	}
 
 	fmt.Println(string(out))
+	return getResult(splitResult(string(out)))
 }
