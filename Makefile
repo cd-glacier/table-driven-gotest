@@ -5,7 +5,7 @@ deps: ## create vendor directory with go dep.
 	cd src && dep ensure
 
 build: deps ## build main.go.
-	go build src/cmd/main.go
+	go build -o tdt src/cmd/main.go
 
 run: ## run main.go.
 	go run ./src/cmd/main.go -package=./src/tabledriventest/ -file=tabledriventest_test.go -function=TestFindFunc -index=0
