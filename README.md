@@ -13,7 +13,7 @@ make build
 ## Usage
 
 ```sh
-tdt -pacakge=./src/cmd/ -file=main_test.go -function=TestMain -index=2
+tdt -f ./src/cmd/main_test.go -v TestMain -i 2
 ```
 
 #### ./src/cmd/main_test.go

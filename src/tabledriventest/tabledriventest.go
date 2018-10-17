@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
-	"go/parser"
 	"go/token"
 	"os"
 	"os/exec"
-	"strings"
 
+	"github.com/g-hyoga/table-driven-gotest/src/copier"
 	"github.com/g-hyoga/table-driven-gotest/src/logger"
 )
 
@@ -25,14 +24,18 @@ type TDT struct {
 var log = logger.New()
 
 func New(packageName, fileName, fnName string, index int) (*TDT, error) {
+	tmpDirName := getHashedDir(packageName)
+	copier.CopyDir(packageName, tmpDirName)
+
 	tdt := &TDT{}
-	tdt.PackageName = "./" + packageName
+	tdt.PackageName = tmpDirName
 	tdt.FileName = tdt.PackageName + fileName
 	tdt.FnName = fnName
 
 	f, err := parseFile(tdt.FileName)
 	if err != nil {
 		log.Errorf("Failed to tdt New. file name: %s", tdt.FileName, err.Error())
+		defer os.RemoveAll(tmpDirName)
 		return nil, err
 	}
 	tdt.File = f
@@ -42,16 +45,8 @@ func New(packageName, fileName, fnName string, index int) (*TDT, error) {
 	return tdt, nil
 }
 
-func ReCreate(filename string) (*os.File, error) {
-	err := os.Remove(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return os.Create(filename)
-}
-
 func (t *TDT) Test() error {
+	defer os.RemoveAll(t.PackageName)
 	fn, err := t.FindFunc()
 	if err != nil {
 		log.Errorf("Not Found '%s' func", t.FnName)
@@ -88,21 +83,15 @@ func (t *TDT) Test() error {
 	return nil
 }
 
-func parseFile(fileName string) (*ast.File, error) {
-	return parser.ParseFile(token.NewFileSet(), fileName, nil, parser.AllErrors)
-}
-
-func (t *TDT) FindFunc() (*ast.FuncDecl, error) {
-	for _, decl := range t.File.Decls {
-		switch d := decl.(type) {
-		case *ast.FuncDecl:
-			if "Test"+d.Name.Name == t.FnName || d.Name.Name == t.FnName {
-				log.Debugf("Found '%s' func", t.FnName)
-				return d, nil
-			}
-		}
+func test(packageName, fnName string) bool {
+	cmd := exec.Command("go", "test", "-v", packageName, "-run", fnName)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Errorf("%s", err.Error())
 	}
-	return nil, fmt.Errorf("Not Found '%s'", t.FnName)
+
+	fmt.Println(string(out))
+	return getResult(splitResult(string(out)))
 }
 
 func isTable(stmt *ast.AssignStmt) bool {
@@ -113,19 +102,6 @@ func isTable(stmt *ast.AssignStmt) bool {
 
 	log.Debugf("isTable: %t", varLenIsOne && isCompositeLit && hasArrayType && hasStructType)
 	return varLenIsOne && isCompositeLit && hasArrayType && hasStructType
-}
-
-func (t *TDT) FindTable(fn *ast.FuncDecl) (*ast.AssignStmt, error) {
-	for _, stmt := range fn.Body.List {
-		switch s := stmt.(type) {
-		case *ast.AssignStmt:
-			if isTable(s) {
-				log.Infof("Found '%s' function's table: '%s'", t.FnName, s.Lhs[0].(*ast.Ident).Name)
-				return s, nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("Not Found '%s' function's table", t.FnName)
 }
 
 func (t *TDT) DeleteOtherTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error) {
@@ -139,25 +115,4 @@ func (t *TDT) DeleteOtherTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error
 	log.Infof("Found %dth Test Case", t.TestCaseIndex)
 	// log.Debugf("Found Test Case: ", ast.Print(token.NewFileSet(), testCases[t.TestCaseIndex:t.TestCaseIndex+1]))
 	return table, nil
-}
-
-func splitResult(output string) string {
-	testStrs := strings.Split(output, "===")
-
-	return testStrs[1]
-}
-
-func getResult(testStr string) bool {
-	return strings.Contains(strings.Split(testStr, "---")[1], "PASS")
-}
-
-func test(packageName, fnName string) bool {
-	cmd := exec.Command("go", "test", "-v", packageName, "-run", fnName)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Errorf("%s", err.Error())
-	}
-
-	fmt.Println(string(out))
-	return getResult(splitResult(string(out)))
 }
