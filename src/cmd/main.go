@@ -11,19 +11,22 @@ import (
 
 var log = logger.New()
 
+// Option represenr command line args
 type Option struct {
 	FileName string
 	FnName   string
 	Index    int
+	TestCase string
 }
 
 func parseOption() *Option {
-	testFileName := flag.String("f", "./src/cmd/main_test.go", "test file name")
-	testFnName := flag.String("v", "TestMain", "test function name")
-	testCaseIndex := flag.Int("i", 0, "test case index: start 0")
+	testFileName := flag.String("file", "./src/cmd/main_test.go", "test file name")
+	testFnName := flag.String("func", "TestMain", "test function name")
+	testCaseIndex := flag.Int("index", 0, "test case index: start 0")
+	userTestCase := flag.String("testcase", "{\"input\", \"output\"}", "test case you want to test.")
 	flag.Parse()
 
-	op := &Option{FileName: *testFileName, FnName: *testFnName, Index: *testCaseIndex}
+	op := &Option{FileName: *testFileName, FnName: *testFnName, Index: *testCaseIndex, TestCase: *userTestCase}
 	log.Debugf("[option] %+v", op)
 	return op
 }
@@ -31,7 +34,6 @@ func parseOption() *Option {
 func main() {
 	op := parseOption()
 	packageName, fileName := filepath.Split(op.FileName)
-	packageName = packageName
 
 	tdt, err := tdt.New(packageName, fileName, op.FnName, op.Index)
 	if err != nil {

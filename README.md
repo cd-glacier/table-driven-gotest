@@ -2,7 +2,7 @@
 # go test command for table driven
 
 You can choice a test case of table driven test and go test.
-This program search test table automatically and Run go Test only test case you choiced.
+This program search test table automatically and Run go Test only test case that you select or you write in command line.
 
 ## Build 
 
@@ -10,10 +10,16 @@ This program search test table automatically and Run go Test only test case you 
 make build
 ```
 
+setting PATH in your terminal
+
 ## Usage
 
+### Choice test case
+
+Run test with test case you select. 
+
 ```sh
-tdt -f ./src/cmd/main_test.go -v TestMain -i 2
+tdt -file ./src/cmd/main_test.go -func TestMain -index 2
 ```
 
 #### ./src/cmd/main_test.go
@@ -36,6 +42,12 @@ function TestMain(t *testing.T) {
     ...
   }
 }
+```
+
+### Write test case in command line
+
+```sh
+tdt -file ./src/cmd/main_test.go -func TestMain -testcase '{"input0", "output2"}'
 ```
 
 
