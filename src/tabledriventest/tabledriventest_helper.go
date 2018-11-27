@@ -40,7 +40,7 @@ func (t *TDT) FindFunc() (*ast.FuncDecl, error) {
 	for _, decl := range t.File.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			if "Test"+d.Name.Name == t.FnName || d.Name.Name == t.FnName {
+			if d.Name.Name == t.FnName {
 				log.Debugf("Found '%s' func", t.FnName)
 				return d, nil
 			}

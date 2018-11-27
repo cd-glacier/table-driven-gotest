@@ -157,7 +157,8 @@ func (t *TDT) AssignUserTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error)
 func parseToExprs(str string) ([]ast.Expr, error) {
 	notIncludeBlank := strings.Replace(str, " ", "", -1)
 	removedOneBracket := notIncludeBlank[1 : len(notIncludeBlank)-1]
-	elements := strings.Split(removedOneBracket, ",")
+	escapedQuote := strings.Replace(removedOneBracket, "'", "\"", -1)
+	elements := strings.Split(escapedQuote, ",")
 	log.Debugf("User Test Case: %#v", elements)
 
 	exprs := []ast.Expr{}
