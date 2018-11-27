@@ -20,10 +20,10 @@ type Option struct {
 }
 
 func parseOption() *Option {
-	testFileName := flag.String("file", "./src/cmd/main_test.go", "test file name")
-	testFnName := flag.String("func", "TestMain", "test function name")
-	testCaseIndex := flag.Int("index", 0, "test case index: start 0")
-	userTestCase := flag.String("testcase", "{\"input\", \"output\"}", "test case you want to test.")
+	testFileName := flag.String("file", "", "test file name. example: --file ./src/cmd/main_test.go")
+	testFnName := flag.String("func", "", "test function name. example: --func TestMain")
+	testCaseIndex := flag.Int("index", -1, "test case index: start 0. exmaple: --index 1")
+	userTestCase := flag.String("testcase", "", "test case you want to test. example: --testcase {\"input\", \"output\"}")
 	flag.Parse()
 
 	op := &Option{FileName: *testFileName, FnName: *testFnName, Index: *testCaseIndex, TestCase: *userTestCase}
@@ -35,10 +35,14 @@ func main() {
 	op := parseOption()
 	packageName, fileName := filepath.Split(op.FileName)
 
-	tdt, err := tdt.New(packageName, fileName, op.FnName, op.Index)
+	tdt, err := tdt.New(packageName, fileName, op.FnName, op.TestCase, op.Index)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to Tester New: %s", err.Error()))
 	}
 
-	tdt.Test()
+	err = tdt.Test()
+	if err != nil {
+		log.Errorf("Failed to Test: %s", err.Error())
+		panic(err)
+	}
 }

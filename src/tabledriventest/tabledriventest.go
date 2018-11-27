@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
+	"go/parser"
 	"go/token"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/g-hyoga/table-driven-gotest/src/copier"
 	"github.com/g-hyoga/table-driven-gotest/src/logger"
@@ -18,12 +20,13 @@ type TDT struct {
 	File          *ast.File
 	FnName        string
 	TestCaseIndex int
+	UserTestCase  string
 	Passed        bool
 }
 
 var log = logger.New()
 
-func New(packageName, fileName, fnName string, index int) (*TDT, error) {
+func New(packageName, fileName, fnName, testCase string, index int) (*TDT, error) {
 	tmpDirName := getHashedDir(packageName)
 	copier.CopyDir(packageName, tmpDirName)
 
@@ -39,7 +42,13 @@ func New(packageName, fileName, fnName string, index int) (*TDT, error) {
 		return nil, err
 	}
 	tdt.File = f
+
+	if index < 0 && testCase == "" {
+		log.Errorf("Assign test case index or test case's self. run `tdt --help`")
+		panic("Assign test case index or test case's self. run `tdt --help`")
+	}
 	tdt.TestCaseIndex = index
+	tdt.UserTestCase = testCase
 
 	log.Debugf("Package: %s, file: %s, function: %s, index: %d", tdt.PackageName, tdt.FileName, tdt.FnName, tdt.TestCaseIndex)
 	return tdt, nil
@@ -59,10 +68,18 @@ func (t *TDT) Test() error {
 		return err
 	}
 
-	_, err = t.DeleteOtherTestCase(table)
-	if err != nil {
-		log.Errorf("Not Found %dth test case", t.TestCaseIndex)
-		return err
+	if t.TestCaseIndex < 0 {
+		_, err = t.AssignUserTestCase(table)
+		if err != nil {
+			log.Errorf("Failed to AssignUserTestCase")
+			return err
+		}
+	} else {
+		_, err = t.DeleteOtherTestCase(table)
+		if err != nil {
+			log.Errorf("Not Found %dth test case", t.TestCaseIndex)
+			return err
+		}
 	}
 
 	file, err := ReCreate(t.FileName)
@@ -115,4 +132,43 @@ func (t *TDT) DeleteOtherTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error
 	log.Infof("Found %dth Test Case", t.TestCaseIndex)
 	// log.Debugf("Found Test Case: ", ast.Print(token.NewFileSet(), testCases[t.TestCaseIndex:t.TestCaseIndex+1]))
 	return table, nil
+}
+
+func (t *TDT) AssignUserTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error) {
+	testCases := table.Rhs[0].(*ast.CompositeLit).Elts
+	if len(testCases)-1 < t.TestCaseIndex {
+		log.Errorf("Not Exist %dth index in '%s' function.", t.TestCaseIndex, t.FnName)
+		return nil, fmt.Errorf("Not Exist %dth index in '%s' function", t.TestCaseIndex, t.FnName)
+	}
+
+	testCases = testCases[0:1]
+	exprs, err := parseToExprs(t.UserTestCase)
+	if err != nil {
+		return nil, err
+	}
+
+	testCases[0] = &ast.CompositeLit{
+		Elts: exprs,
+	}
+
+	return table, nil
+}
+
+func parseToExprs(str string) ([]ast.Expr, error) {
+	notIncludeBlank := strings.Replace(str, " ", "", -1)
+	removedOneBracket := notIncludeBlank[1 : len(notIncludeBlank)-1]
+	elements := strings.Split(removedOneBracket, ",")
+	log.Debugf("User Test Case: %#v", elements)
+
+	exprs := []ast.Expr{}
+	for _, e := range elements {
+		expr, err := parser.ParseExpr(e)
+		if err != nil {
+			return nil, err
+		}
+
+		exprs = append(exprs, expr)
+	}
+
+	return exprs, nil
 }

@@ -8,7 +8,7 @@ build: deps ## build main.go.
 	go build -o tdt src/cmd/main.go
 
 run: ## run main.go.
-	go run ./src/cmd/main.go -file ./src/tabledriventest/tabledriventest_test.go -func TestFindFunc -index 0
+	go run ./src/cmd/main.go --file ./src/cmd/main_test.go --func TestMain --testcase "{3, 4}"
 
 test: ## unit test with gotest. ref: github.com/rakyll/gotest
 	gotest -v ./...
