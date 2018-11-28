@@ -6,7 +6,8 @@ import (
 
 func Parse(testCaseStr string) []string {
 	notIncludeBlank := strings.Replace(testCaseStr, " ", "", -1)
-	return RemoveOuterBracket(notIncludeBlank)
+	replacedQuote := strings.Replace(notIncludeBlank, "'", "\"", -1)
+	return RemoveOuterBracket(replacedQuote)
 }
 
 func RemoveOuterBracket(str string) []string {
@@ -16,15 +17,16 @@ func RemoveOuterBracket(str string) []string {
 	wordPos := 0
 	for i, c := range str {
 		if c == '{' {
-			wordPos = i + 1
 			foundLeftBracketNum++
-		} else if foundLeftBracketNum >= 2 && c == '}' {
-			foundLeftBracketNum--
-			result = append(result, str[wordPos-1:i+1])
-		}
 
-		if foundLeftBracketNum >= 0 && c == ',' {
-			result = append(result, str[wordPos:i])
+		} else if foundLeftBracketNum == 1 && c == '}' { // if c is last bracket
+			result = append(result, str[wordPos+1:i])
+
+		} else if c == '}' {
+			foundLeftBracketNum--
+
+		} else if foundLeftBracketNum >= 1 && c == ',' {
+			result = append(result, str[wordPos+1:i])
 			wordPos = i
 		}
 	}
