@@ -8,10 +8,10 @@ import (
 	"go/token"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/g-hyoga/table-driven-gotest/src/copier"
 	"github.com/g-hyoga/table-driven-gotest/src/logger"
+	"github.com/g-hyoga/table-driven-gotest/src/testcaseparser"
 )
 
 type TDT struct {
@@ -155,14 +155,11 @@ func (t *TDT) AssignUserTestCase(table *ast.AssignStmt) (*ast.AssignStmt, error)
 }
 
 func parseToExprs(str string) ([]ast.Expr, error) {
-	notIncludeBlank := strings.Replace(str, " ", "", -1)
-	removedOneBracket := notIncludeBlank[1 : len(notIncludeBlank)-1]
-	escapedQuote := strings.Replace(removedOneBracket, "'", "\"", -1)
-	elements := strings.Split(escapedQuote, ",")
-	log.Debugf("User Test Case: %#v", elements)
+	strExprs := testcaseparser.Parse(str)
+	log.Debugf("User Test Case: %#v", strExprs)
 
 	exprs := []ast.Expr{}
-	for _, e := range elements {
+	for _, e := range strExprs {
 		expr, err := parser.ParseExpr(e)
 		if err != nil {
 			return nil, err

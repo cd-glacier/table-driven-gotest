@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func PlusOne(num int) int {
 	return num + 1
@@ -41,6 +44,33 @@ func TestConcat(t *testing.T) {
 		actual := Concat(tt.str1, tt.str2)
 		if actual != tt.output {
 			t.Fatalf("Failed to PlusOne. actual=%s, expected=%s", actual, tt.output)
+		}
+	}
+}
+
+func RemoveBlank(list []string) []string {
+	result := []string{}
+	for _, e := range list {
+		if e != " " {
+			result = append(result, e)
+		}
+	}
+	return result
+}
+
+func TestRemoveBlank(t *testing.T) {
+	tests := []struct {
+		input  []string
+		output []string
+	}{
+		{[]string{"slice", " ", "include", " ", "blank"}, []string{"slice", "include", "blank"}},
+		{[]string{"slice", "does", "not", "include", "blank"}, []string{"slice", "does", "not", "include", "blank"}},
+	}
+
+	for _, tt := range tests {
+		actual := RemoveBlank(tt.input)
+		if !reflect.DeepEqual(actual, tt.output) {
+			t.Fatalf("Failed to RemoveBlank. actual=%#v, expected=%#v", actual, tt.output)
 		}
 	}
 }
