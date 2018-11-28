@@ -2,6 +2,8 @@ package testcaseparser
 
 import (
 	"strings"
+
+	"github.com/k0kubun/pp"
 )
 
 func Parse(testCaseStr string) []string {
@@ -25,11 +27,12 @@ func RemoveOuterBracket(str string) []string {
 		} else if c == '}' {
 			foundLeftBracketNum--
 
-		} else if foundLeftBracketNum >= 1 && c == ',' {
+		} else if foundLeftBracketNum == 1 && c == ',' {
 			result = append(result, str[wordPos+1:i])
 			wordPos = i
 		}
 	}
 
+	pp.Println(result)
 	return result
 }
