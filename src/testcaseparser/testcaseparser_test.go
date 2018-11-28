@@ -12,7 +12,7 @@ func TestRemoveOuterBracket(t *testing.T) {
 	}{
 		{"{hoge,{foo}}", []string{"hoge", "{foo}"}},
 		{"{[]string{'hoge'},[]string{'foo'}}", []string{"[]string{'hoge'}", "[]string{'foo'}"}},
-		{"{[]string{'hoge','fuga'},[]string{'foo'}}", []string{"[]string{'hoge','fuga'}", "[]string{'foo'}"}},
+		{"{[]string{'hoge',' '},[]string{'foo'}}", []string{"[]string{'hoge',' '}", "[]string{'foo'}"}},
 	}
 
 	for _, tt := range tests {

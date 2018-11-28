@@ -8,7 +8,7 @@ build: deps ## build main.go.
 	go build -o tdt src/cmd/main.go
 
 run: ## run main.go.
-	go run ./src/cmd/main.go --file ./src/cmd/main_test.go --func TestRemoveBlank --testcase "{ []string{'hoge', ' '}, []string{'hoge'} }"
+	go run ./src/cmd/main.go --file ./src/cmd/main_test.go --func TestRemoveBlank --testcase '{ []string{"hoge", " "}, []string{"hoge"} }'
 
 test: ## unit test with gotest. ref: github.com/rakyll/gotest
 	gotest -v ./...

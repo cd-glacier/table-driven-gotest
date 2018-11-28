@@ -2,14 +2,14 @@ package testcaseparser
 
 import (
 	"strings"
-
-	"github.com/k0kubun/pp"
 )
 
 func Parse(testCaseStr string) []string {
-	notIncludeBlank := strings.Replace(testCaseStr, " ", "", -1)
+	escapedSpace := strings.Replace(testCaseStr, "\" \"", "___SPACE___", -1)
+	notIncludeBlank := strings.Replace(escapedSpace, " ", "", -1)
 	replacedQuote := strings.Replace(notIncludeBlank, "'", "\"", -1)
-	return RemoveOuterBracket(replacedQuote)
+	revertSpace := strings.Replace(replacedQuote, "___SPACE___", "\" \"", -1)
+	return RemoveOuterBracket(revertSpace)
 }
 
 func RemoveOuterBracket(str string) []string {
@@ -32,7 +32,5 @@ func RemoveOuterBracket(str string) []string {
 			wordPos = i
 		}
 	}
-
-	pp.Println(result)
 	return result
 }
